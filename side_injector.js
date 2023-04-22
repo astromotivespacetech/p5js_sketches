@@ -1,7 +1,7 @@
-var pressure = 2000; // psi
+var pressure = 1; // psi
 var H, W;
 const one_gee = 32.2 // ft/s^2
-const dt = 0.0001 // microseconds
+const dt = 0.01 // microseconds
 
 var plug, piston, elapsed;
 
@@ -51,10 +51,13 @@ class Component {
     return accel;
   }
   
+  check(self) {}
+  
   update(self) {
     var a = this.calc_accel();
     this.vel += a * dt * this.dir;
     this.pos += this.vel * dt;
+    this.check();
   }
   
 }
@@ -63,6 +66,13 @@ class Component {
 class Plug extends Component  {
   draw(self) {
     rect(this.pos, H/2, 50, this.rad*30);
+  }
+  
+  check(self) {
+    if (this.pos < 100) {
+      this.pos = 100;
+      this.vel = 0;
+    }
   }
 }
 
