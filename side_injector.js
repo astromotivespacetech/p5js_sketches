@@ -1,7 +1,8 @@
 var pressure = 2000; // psi
 var H, W;
 const one_gee = 32.2 // ft/s^2
-const dt = 0.000001 // microseconds
+const dt = 0.00001 // microseconds
+const m2ftpersec = 3.28084;
 
 var plug, piston, elapsed;
 
@@ -20,12 +21,12 @@ function setup() {
   createCanvas(W, H);
   
   plugRadius = 3 // in
-  plugMass = 0.2 // lb
+  plugMass = 0.5 // lb
   plugPosition = 120;
   plugLength = 600;
 
   pistonRadius = 2.5 // in
-  pistonMass = 2 // lb
+  pistonMass = 5 // lb
   pistonPosition = 500;
   
   plug = new Plug(plugRadius, plugMass, plugPosition, -1);
@@ -63,7 +64,7 @@ function draw() {
   text("Elapsed: " + round(elapsed, 6) + " s", 50, 30);
   text("Plug Velocity: " + round(plug.vel, 1) + "ft/s", 200, 30);
   text("Piston Velocity: " + round(piston.vel, 1) + "ft/s", 350, 30); 
-
+  text("Pressure: " + round(pressure, 0) + " psi", 500, 30);
   
   
 }
@@ -121,11 +122,17 @@ class Plug extends Component  {
     if (this.pos < plugPosition) {
       this.pos = plugPosition;
       this.vel = 0;
+    } else {
+      pressure -= (this.pos - plugPosition);
+      if (pressure < 0) { pressure = 0; }
     }
   }
 }
 
 class Piston extends Component  {
+  
+  check(self) {}
+  
   draw(self) {
     rect(this.pos, H/2, 75, 100);
   }
@@ -136,11 +143,13 @@ class Piston extends Component  {
 function check_collide(piston, plug) {
   if (piston.pos > plug.pos + plugLength - 25) {
     
+    piston.pos = plug.pos + plugLength - 25;
+    
     let vf1 = (pistonMass - plugMass) * piston.vel / (pistonMass + plugMass);
     let vf2 = 2*pistonMass*piston.vel / (pistonMass + plugMass);
     
-    piston.vel = vf1;
-    plug.vel = vf2;
+    piston.vel = vf1 * 0.9;
+    plug.vel = vf2 * 0.9;
     
   }
 }
