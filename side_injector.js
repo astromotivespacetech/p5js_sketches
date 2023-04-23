@@ -12,6 +12,7 @@ var pistonPosition, pistonRadius, pistonMass;
 
 var scaleFactor = 1200; // 1200 pixels = 1 foot, 100 pixels = 1 inch
 
+var actuation = 0;
 
 
 function setup() {
@@ -21,13 +22,13 @@ function setup() {
   createCanvas(W, H);
   
   plugRadius = 3 // in
-  plugMass = 0.5 // lb
-  plugPosition = 120;
-  plugLength = 600;
+  plugMass = 9.5 // lb
+  plugPosition = 100;
+  plugLength = 650;
 
-  pistonRadius = 2.5 // in
-  pistonMass = 5 // lb
-  pistonPosition = 500;
+  pistonRadius = 2 // in
+  pistonMass = 40 // lb
+  pistonPosition = 425;
   
   plug = new Plug(plugRadius, plugMass, plugPosition, -1);
   piston = new Piston(pistonRadius, pistonMass, pistonPosition, 1);
@@ -42,8 +43,8 @@ function draw() {
   stroke(150);
   strokeWeight(1);
 
-  for (let i = 1; i < 9; i++) {
-      line(120*i, 100, 120*i, H);
+  for (let i = 1; i < 12; i++) {
+      line(100*i, 100, 100*i, H);
   }
 
   stroke(0);
@@ -60,11 +61,18 @@ function draw() {
   
   elapsed += dt;
   
+  if (actuation > 0) {
+    if (plug.pos - plugPosition < plugRadius * 0.5 * 100) {
+      actuation += dt;      
+    }
+  }
+  
   strokeWeight(0);
   text("Elapsed: " + round(elapsed, 6) + " s", 50, 30);
   text("Plug Velocity: " + round(plug.vel, 1) + "ft/s", 200, 30);
   text("Piston Velocity: " + round(piston.vel, 1) + "ft/s", 350, 30); 
   text("Pressure: " + round(pressure, 0) + " psi", 500, 30);
+  text("Actuation: " + round(actuation, 6) + " s", 50, 60);
   
   
 }
@@ -150,6 +158,10 @@ function check_collide(piston, plug) {
     
     piston.vel = vf1 * 0.9;
     plug.vel = vf2 * 0.9;
+    
+    if (actuation == 0) {
+      actuation += dt;
+    }
     
   }
 }
