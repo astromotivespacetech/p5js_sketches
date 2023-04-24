@@ -22,12 +22,12 @@ function setup() {
   createCanvas(W, H);
   
   plugRadius = 3 // in
-  plugMass = 5.5 // lb
+  plugMass = 4.25 // lb
   plugPosition = 100;
   plugLength = 850;
 
   pistonRadius = 2 // in
-  pistonMass = 20 // lb
+  pistonMass = 33 // lb
   pistonPosition = 325;
   
   plug = new Plug(plugRadius, plugMass, plugPosition, -1);
