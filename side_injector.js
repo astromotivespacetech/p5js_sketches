@@ -1,7 +1,7 @@
 var pressure = 2000; // psi
 var H, W;
 const one_gee = 32.2 // ft/s^2
-const dt = 0.00001 // microseconds
+const dt = 0.000001 // microseconds
 const m2ftpersec = 3.28084;
 
 var plug, piston, elapsed;
@@ -18,17 +18,17 @@ var actuation = 0;
 function setup() {
   W = windowWidth;
   H = windowHeight;
-  frameRate(20);
+  frameRate(30);
   createCanvas(W, H);
   
   plugRadius = 3 // in
-  plugMass = 9.5 // lb
+  plugMass = 5.5 // lb
   plugPosition = 100;
-  plugLength = 650;
+  plugLength = 850;
 
   pistonRadius = 2 // in
-  pistonMass = 40 // lb
-  pistonPosition = 425;
+  pistonMass = 20 // lb
+  pistonPosition = 325;
   
   plug = new Plug(plugRadius, plugMass, plugPosition, -1);
   piston = new Piston(pistonRadius, pistonMass, pistonPosition, 1);
@@ -49,23 +49,26 @@ function draw() {
 
   stroke(0);
   
-  piston.update();
-  plug.update();
   
-  check_collide(piston, plug);
+  for (let i = 0; i < 25; i++) {
+    piston.update();
+    plug.update();  
+    check_collide(piston, plug);
+    elapsed += dt;
+    if (actuation > 0) {
+      if (plug.pos - plugPosition < plugRadius * 0.5 * 100) {
+        actuation += dt;      
+      }
+    }
+  }
   
   piston.draw();
   plug.draw();
   
   
   
-  elapsed += dt;
   
-  if (actuation > 0) {
-    if (plug.pos - plugPosition < plugRadius * 0.5 * 100) {
-      actuation += dt;      
-    }
-  }
+
   
   strokeWeight(0);
   text("Elapsed: " + round(elapsed, 6) + " s", 50, 30);
