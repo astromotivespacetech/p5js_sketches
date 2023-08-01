@@ -72,8 +72,8 @@ function draw() {
   
   strokeWeight(0);
   text("Elapsed: " + round(elapsed, 6) + " s", 50, 30);
-  text("Plug Velocity: " + round(plug.vel, 1) + "ft/s", 200, 30);
-  text("Piston Velocity: " + round(piston.vel, 1) + "ft/s", 350, 30); 
+  text("Plug Velocity: " + round(ft2m(plug.vel), 1) + "m/s", 200, 30);
+  text("Piston Velocity: " + round(ft2m(piston.vel), 1) + "m/s", 350, 30); 
   text("Pressure: " + round(pressure, 0) + " psi", 500, 30);
   text("Actuation: " + round(actuation, 6) + " s", 50, 60);
   
@@ -168,3 +168,10 @@ function check_collide(piston, plug) {
     
   }
 }
+
+
+function ft2m(x) {
+  return x*0.3048;
+}
+
+// end
