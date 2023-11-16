@@ -24,6 +24,11 @@ function setup() {
     }
   }
   
+  for (let i = 0; i < cells.length; i++) {
+    cells[i].calculateNeighbors();
+  }
+    
+  
   for (let i = 0; i < numParticles; i++) {
     let p = new Particle(createVector(random(width), random(height)), createVector(0,0), r);
     particles.push(p);
@@ -73,16 +78,21 @@ class Particle {
     
     let i = cells[this.cell].i;
     let j = cells[this.cell].j;
-    let neighbors = getNeighbors(cells, i, j, N);
-    
+    let neighbors = [];
+    neighbors.push(...cells[this.cell].particles);
+    let neighborcells = cells[this.cell].neighborcells;
+
+    for (let i = 0; i < neighborcells.length; i++) {
+      neighbors.push(...cells[neighborcells[i]].particles);
+    }
     
     for (const p of neighbors) {
       let f = lennardJonesForce(this, p);      
       force.add(f);
     }
 
-    // let gravity = createVector(0, g);
-    // force.add(gravity);
+//     let gravity = createVector(0, g);
+//     force.add(gravity);
     this.vel.add(force.mult(dt));    
     this.vel.limit(c);
     this.pos.add(p5.Vector.mult(this.vel, dt));
@@ -130,15 +140,13 @@ function lennardJonesForce(p1, p2) {
     let target = r*10;
 
     if (mag <= target) {
-      v.setMag((target-mag)**2);
+      v.setMag((target-mag)**2 * 0.01);
     } else {
       // v.mult(-1);
       // v.setMag(1/mag);
-      v.setMag(0);
+       v.setMag(0);
     }
     return v;
-
-    
 }
 
 
@@ -151,6 +159,27 @@ class Cell {
     this.index = i + j * N;
     this.size = size;
     this.particles = [];
+    this.neighborcells = [];
+  }
+  
+  calculateNeighbors() {
+    const ni = this.i;
+    const nj = this.j;
+
+    for (let xOffset = -1; xOffset <= 1; xOffset++) {
+      for (let yOffset = -1; yOffset <= 1; yOffset++) {
+        const neighborI = ni + xOffset;
+        const neighborJ = nj + yOffset;
+
+        if (isValidCellIndex(neighborI, neighborJ, N)) {
+          const neighborIndex = neighborI + neighborJ * N;
+          // Avoid adding the current cell itself to its neighbors
+          if (neighborIndex !== this.index) {
+            this.neighborcells.push(neighborIndex);
+          }
+        }
+      }
+    }
   }
   
   display() {
@@ -162,36 +191,16 @@ class Cell {
 
 
 function calculateCellIndex(pos, gridSize) {
-    const gridX = Math.floor(pos.x / 100); // Assuming each cell is 100 units wide
-    const gridY = Math.floor(pos.y / 100); // Assuming each cell is 100 units tall
-
-    // Clamp the coordinates to ensure particles at the edges are assigned to valid cells
+    const gridX = Math.floor(pos.x / X); 
+    const gridY = Math.floor(pos.y / X); 
     const clampedGridX = Math.max(0, Math.min(gridX, gridSize - 1));
     const clampedGridY = Math.max(0, Math.min(gridY, gridSize - 1));
-
-    // Calculate the cell index based on grid coordinates
     const cellIndex = clampedGridY * N + clampedGridX;
 
     return cellIndex;
 }
 
 
-function getNeighbors(cells, i, j) {
-    const neighbors = [];
-
-    for (let xOffset = -1; xOffset <= 1; xOffset++) {
-        for (let yOffset = -1; yOffset <= 1; yOffset++) {
-            const ni = i + xOffset;
-            const nj = j + yOffset;
-
-            if (isValidCellIndex(ni, nj, N)) {
-                const index = IX(ni, nj);
-                neighbors.push(...cells[index].particles);
-            }
-        }
-    }
-    return neighbors;
-}
 
 
 function isValidCellIndex(i, j, gridSize) {
