@@ -1,17 +1,15 @@
-var pressure = 2000; // psi
+var pressure = 4000; // psi
 var H, W;
 const one_gee = 32.2 // ft/s^2
 const dt = 0.000001 // microseconds
 const m2ftpersec = 3.28084;
-
+const gamma = 1.4;
+const speedOfSound = 3100 // ft/s
 var plug, piston, elapsed;
-
 var plugLength;
 var plugPosition, plugRadius, plugMass;
 var pistonPosition, pistonRadius, pistonMass;
-
 var scaleFactor = 1200; // 1200 pixels = 1 foot, 100 pixels = 1 inch
-
 var actuation = 0;
 
 
@@ -20,26 +18,24 @@ function setup() {
   H = windowHeight;
   frameRate(30);
   createCanvas(W, H);
-  
+ 
   plugRadius = 3 // in
-  plugMass = 4.25 // lb
+  plugMass = 30 // lb
   plugPosition = 100;
-  plugLength = 850;
+  plugLength = 850 + 600;
 
-  pistonRadius = 2 // in
-  pistonMass = 33 // lb
-  pistonPosition = 325;
-  
+  pistonRadius = 2.5 // in
+  pistonMass = 40 // lb
+  pistonPosition = 300;
+ 
   plug = new Plug(plugRadius, plugMass, plugPosition, -1);
   piston = new Piston(pistonRadius, pistonMass, pistonPosition, 1);
   elapsed = 0;
-  
 }
 
 function draw() {
   background(240);
-    
-  
+
   stroke(150);
   strokeWeight(1);
 
@@ -48,8 +44,8 @@ function draw() {
   }
 
   stroke(0);
-  
-  
+ 
+ 
   for (let i = 0; i < 25; i++) {
     piston.update();
     plug.update();  
@@ -58,26 +54,21 @@ function draw() {
     if (actuation > 0) {
       if (plug.pos - plugPosition < plugRadius * 0.5 * 100) {
         actuation += dt;      
+      } else {
+        noLoop();
       }
     }
   }
-  
+ 
   piston.draw();
   plug.draw();
-  
-  
-  
-  
 
-  
   strokeWeight(0);
   text("Elapsed: " + round(elapsed, 6) + " s", 50, 30);
   text("Plug Velocity: " + round(ft2m(plug.vel), 1) + "m/s", 200, 30);
-  text("Piston Velocity: " + round(ft2m(piston.vel), 1) + "m/s", 350, 30); 
+  text("Piston Velocity: " + round(ft2m(piston.vel), 1) + "m/s", 350, 30);
   text("Pressure: " + round(pressure, 0) + " psi", 500, 30);
   text("Actuation: " + round(actuation, 6) + " s", 50, 60);
-  
-  
 }
 
 class Component {
@@ -88,84 +79,95 @@ class Component {
     this.pos = x;
     this.vel = 0;
     this.dir = d;
+    this.P = calcPressure(this.vel);
   }
-  
+ 
   calc_accel(self) {
-    var force = pressure * this.area; // lbf
+    this.P = calcPressure(this.vel);
+    var force = this.P * this.area; // lbf
     var accel = force / this.mass * one_gee;
     return accel;
   }
-  
+ 
   check(self) {}
-  
+ 
   update(self) {
     var a = this.calc_accel();
     this.vel += a * dt * this.dir;
     this.pos += this.vel * dt * scaleFactor;
     this.check();
   }
-  
 }
 
 
 class Plug extends Component  {
   draw(self) {
     push();
-    translate(this.pos, H/2);
+    translate(this.pos, H/2-20);
     beginShape();
     vertex(0,0);
     vertex(50, 0);
-    vertex(50, 45);
-    vertex(50+plugLength, 45);
-    vertex(50+plugLength, 0);
-    vertex(75+plugLength, 0);
-    vertex(75+plugLength, 100);
-    vertex(50+plugLength, 100);
-    vertex(50+plugLength, 55);
-    vertex(50, 55);
-    vertex(50, 100);
-    vertex(0, 100);
+    vertex(50, 65);
+    vertex(50+plugLength, 65);
+    vertex(50+plugLength, 20);
+    vertex(75+plugLength, 20);
+    vertex(75+plugLength, 120);
+    vertex(50+plugLength, 120);
+    vertex(50+plugLength, 75);
+    vertex(50, 75);
+    vertex(50, 140);
+    vertex(0, 140);
     endShape(CLOSE);
     pop();
   }
-  
+ 
   check(self) {
     if (this.pos < plugPosition) {
       this.pos = plugPosition;
       this.vel = 0;
-    } else {
-      pressure -= (this.pos - plugPosition);
-      if (pressure < 0) { pressure = 0; }
     }
   }
 }
 
 class Piston extends Component  {
-  
+ 
   check(self) {}
-  
-  draw(self) {
-    rect(this.pos, H/2, 75, 100);
+ 
+  draw(self) {    
+    push();
+    translate(this.pos, H/2-20);
+    beginShape();
+    vertex(0, 0);
+    vertex(0, 140);
+    vertex(700, 140);
+    vertex(700, 120);
+    vertex(100, 120);
+    vertex(100, 20);
+    vertex(700, 20);
+    vertex(700, 0);
+    endShape(CLOSE);
+    pop();
   }
 }
 
 
 
 function check_collide(piston, plug) {
-  if (piston.pos > plug.pos + plugLength - 25) {
-    
-    piston.pos = plug.pos + plugLength - 25;
-    
+  if (piston.pos > plug.pos + plugLength - 50) {
+   
+    piston.pos = plug.pos + plugLength - 50;
+   
     let vf1 = (pistonMass - plugMass) * piston.vel / (pistonMass + plugMass);
     let vf2 = 2*pistonMass*piston.vel / (pistonMass + plugMass);
+   
+    piston.vel = vf1 * 0.95;
+    plug.vel = vf2 * 0.95;
     
-    piston.vel = vf1 * 0.9;
-    plug.vel = vf2 * 0.9;
-    
+    console.log(piston.P);
+
     if (actuation == 0) {
       actuation += dt;
     }
-    
   }
 }
 
@@ -173,5 +175,27 @@ function check_collide(piston, plug) {
 function ft2m(x) {
   return x*0.3048;
 }
+
+
+
+function calcPressure(v) {
+  if (v) {
+    Pp = pressure * (1 - ((gamma-1)/2)*(v/speedOfSound))**(2*gamma/(gamma-1));
+    return Pp;
+  } else {
+    return pressure;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
 
 // end
