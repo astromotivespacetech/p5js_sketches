@@ -1,17 +1,36 @@
-var pressure = 4000; // psi
+var pressure = 2000; // psi
 var H, W;
 const one_gee = 32.2 // ft/s^2
 const dt = 0.000001 // microseconds
 const m2ftpersec = 3.28084;
-const gamma = 1.4;
-const speedOfSound = 3100 // ft/s
 var plug, piston, elapsed;
 var plugLength;
 var plugPosition, plugRadius, plugMass;
 var pistonPosition, pistonRadius, pistonMass;
-var scaleFactor = 1200; // 1200 pixels = 1 foot, 100 pixels = 1 inch
+var scaleFactor = 360; // 1200 pixels = 1 foot
+var inch = scaleFactor/12;
 var actuation = 0;
 
+var gases = {
+  'air': {
+    'gamma': 1.4,
+    'ss': 1000
+  },
+  'helium': {
+    'gamma': 1.66,
+    'ss': 3100
+  }
+}
+
+var gas = gases.air;
+
+function in2ft(x) {
+  return x / 12;
+}
+
+function ft2in(x) {
+  return x * 12;
+}
 
 function setup() {
   W = windowWidth;
@@ -19,17 +38,21 @@ function setup() {
   frameRate(30);
   createCanvas(W, H);
  
+  pistonRadius = 2.5 // in
+  pistonMass = 50 // lb
+  pistonPosition = 12 // in;
+  
+  pistonTravel = 9;  // in;
+  
   plugRadius = 3 // in
   plugMass = 30 // lb
-  plugPosition = 100;
-  plugLength = 850 + 600;
+  plugPosition = 1; // in
+  plugLength = pistonPosition-plugPosition+pistonTravel+0.5;  // in
 
-  pistonRadius = 2.5 // in
-  pistonMass = 40 // lb
-  pistonPosition = 300;
+
  
-  plug = new Plug(plugRadius, plugMass, plugPosition, -1);
-  piston = new Piston(pistonRadius, pistonMass, pistonPosition, 1);
+  plug = new Plug(plugRadius, plugMass, in2ft(plugPosition), -1);
+  piston = new Piston(pistonRadius, pistonMass, in2ft(pistonPosition), 1);
   elapsed = 0;
 }
 
@@ -39,20 +62,20 @@ function draw() {
   stroke(150);
   strokeWeight(1);
 
-  for (let i = 1; i < 12; i++) {
-      line(100*i, 100, 100*i, H);
+  for (let i = 1; i < 30; i++) {
+      line(inch*i, inch, inch*i, H);
   }
 
   stroke(0);
  
  
-  for (let i = 0; i < 25; i++) {
+  for (let i = 0; i < 50; i++) {
     piston.update();
     plug.update();  
     check_collide(piston, plug);
     elapsed += dt;
     if (actuation > 0) {
-      if (plug.pos - plugPosition < plugRadius * 0.5 * 100) {
+      if (plug.pos - in2ft(plugPosition) < in2ft(plugRadius) * 0.5) {
         actuation += dt;      
       } else {
         noLoop();
@@ -60,9 +83,9 @@ function draw() {
     }
   }
  
-  piston.draw();
   plug.draw();
-
+  piston.draw();
+  
   strokeWeight(0);
   text("Elapsed: " + round(elapsed, 6) + " s", 50, 30);
   text("Plug Velocity: " + round(ft2m(plug.vel), 1) + "m/s", 200, 30);
@@ -94,7 +117,7 @@ class Component {
   update(self) {
     var a = this.calc_accel();
     this.vel += a * dt * this.dir;
-    this.pos += this.vel * dt * scaleFactor;
+    this.pos += this.vel * dt;
     this.check();
   }
 }
@@ -103,27 +126,27 @@ class Component {
 class Plug extends Component  {
   draw(self) {
     push();
-    translate(this.pos, H/2-20);
+    translate(ft2in(this.pos)*inch, H/2-plugRadius*inch);
     beginShape();
     vertex(0,0);
-    vertex(50, 0);
-    vertex(50, 65);
-    vertex(50+plugLength, 65);
-    vertex(50+plugLength, 20);
-    vertex(75+plugLength, 20);
-    vertex(75+plugLength, 120);
-    vertex(50+plugLength, 120);
-    vertex(50+plugLength, 75);
-    vertex(50, 75);
-    vertex(50, 140);
-    vertex(0, 140);
+    vertex(0.5*inch, 0);
+    vertex(0.5*inch, plugRadius*inch-0.5*inch);
+    vertex(0.5*inch+plugLength*inch, plugRadius*inch-0.5*inch);
+    vertex(0.5*inch+plugLength*inch, (plugRadius-pistonRadius)*inch);
+    vertex(1*inch+plugLength*inch, (plugRadius-pistonRadius)*inch);
+    vertex(1*inch+plugLength*inch, plugRadius*2*inch - (plugRadius-pistonRadius)*inch);
+    vertex(0.5*inch+plugLength*inch, plugRadius*2*inch - (plugRadius-pistonRadius)*inch);
+    vertex(0.5*inch+plugLength*inch, plugRadius*inch+0.5*inch);
+    vertex(0.5*inch, plugRadius*inch+0.5*inch);
+    vertex(0.5*inch, plugRadius*2*inch);
+    vertex(0, plugRadius*2*inch);
     endShape(CLOSE);
     pop();
   }
  
   check(self) {
-    if (this.pos < plugPosition) {
-      this.pos = plugPosition;
+    if (this.pos < in2ft(plugPosition)) {
+      this.pos = in2ft(plugPosition);
       this.vel = 0;
     }
   }
@@ -135,16 +158,12 @@ class Piston extends Component  {
  
   draw(self) {    
     push();
-    translate(this.pos, H/2-20);
+    translate(ft2in(this.pos)*inch, H/2-pistonRadius*inch);
     beginShape();
     vertex(0, 0);
-    vertex(0, 140);
-    vertex(700, 140);
-    vertex(700, 120);
-    vertex(100, 120);
-    vertex(100, 20);
-    vertex(700, 20);
-    vertex(700, 0);
+    vertex(0, pistonRadius*2*inch);
+    vertex(inch, pistonRadius*2*inch);
+    vertex(inch, 0);
     endShape(CLOSE);
     pop();
   }
@@ -153,9 +172,9 @@ class Piston extends Component  {
 
 
 function check_collide(piston, plug) {
-  if (piston.pos > plug.pos + plugLength - 50) {
+  if (piston.pos > plug.pos + in2ft(plugLength - 0.5)) {
    
-    piston.pos = plug.pos + plugLength - 50;
+    piston.pos = plug.pos + in2ft(plugLength - 0.5);
    
     let vf1 = (pistonMass - plugMass) * piston.vel / (pistonMass + plugMass);
     let vf2 = 2*pistonMass*piston.vel / (pistonMass + plugMass);
@@ -180,7 +199,7 @@ function ft2m(x) {
 
 function calcPressure(v) {
   if (v) {
-    Pp = pressure * (1 - ((gamma-1)/2)*(v/speedOfSound))**(2*gamma/(gamma-1));
+    Pp = pressure * (1 - ((gas.gamma-1)/2)*(v/gas.ss))**(2*gas.gamma/(gas.gamma-1));
     return Pp;
   } else {
     return pressure;
