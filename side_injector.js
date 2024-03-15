@@ -13,11 +13,11 @@ var actuation = 0;
 var gases = {
   'air': {
     'gamma': 1.4,
-    'ss': 1000
+    'ss': 1125
   },
   'helium': {
     'gamma': 1.66,
-    'ss': 3100
+    'ss': 3191
   }
 }
 
