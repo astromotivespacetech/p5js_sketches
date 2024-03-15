@@ -2,7 +2,6 @@ var pressure = 2000; // psi
 var H, W;
 const one_gee = 32.2 // ft/s^2
 const dt = 0.000001 // microseconds
-const m2ftpersec = 3.28084;
 var plug, piston, elapsed;
 var plugLength;
 var plugPosition, plugRadius, plugMass;
@@ -24,14 +23,6 @@ var gases = {
 
 var gas = gases.air;
 
-function in2ft(x) {
-  return x / 12;
-}
-
-function ft2in(x) {
-  return x * 12;
-}
-
 function setup() {
   W = windowWidth;
   H = windowHeight;
@@ -41,7 +32,6 @@ function setup() {
   pistonRadius = 2.5 // in
   pistonMass = 50 // lb
   pistonPosition = 12 // in;
-  
   pistonTravel = 12;  // in;
   
   plugRadius = 3 // in
@@ -65,7 +55,6 @@ function draw() {
   }
 
   stroke(0);
- 
  
   for (let i = 0; i < 50; i++) {
     piston.update();
@@ -121,7 +110,6 @@ class Component {
   }
 }
 
-
 class Plug extends Component  {
   draw(self) {
     push();
@@ -168,8 +156,6 @@ class Piston extends Component  {
   }
 }
 
-
-
 function check_collide(piston, plug) {
   if (piston.pos > plug.pos + in2ft(plugLength - 0.5)) {
    
@@ -189,12 +175,17 @@ function check_collide(piston, plug) {
   }
 }
 
-
 function ft2m(x) {
   return x*0.3048;
 }
 
+function in2ft(x) {
+  return x / 12;
+}
 
+function ft2in(x) {
+  return x * 12;
+}
 
 function calcPressure(v) {
   if (v) {
