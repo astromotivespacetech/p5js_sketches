@@ -42,15 +42,13 @@ function setup() {
   pistonMass = 50 // lb
   pistonPosition = 12 // in;
   
-  pistonTravel = 9;  // in;
+  pistonTravel = 12;  // in;
   
   plugRadius = 3 // in
   plugMass = 30 // lb
   plugPosition = 1; // in
   plugLength = pistonPosition-plugPosition+pistonTravel+0.5;  // in
 
-
- 
   plug = new Plug(plugRadius, plugMass, in2ft(plugPosition), -1);
   piston = new Piston(pistonRadius, pistonMass, in2ft(pistonPosition), 1);
   elapsed = 0;
@@ -77,6 +75,7 @@ function draw() {
     if (actuation > 0) {
       if (plug.pos - in2ft(plugPosition) < in2ft(plugRadius) * 0.5) {
         actuation += dt;      
+        // pressure -= ft2in(plug.pos)**2;   // simulates the pressure dropping as plug retracts, not accurate
       } else {
         noLoop();
       }
